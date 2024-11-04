@@ -233,7 +233,7 @@ const LLMPage = () => {
         <Card className="text-center px-5 py-4 border-b">
           <div className="text-center flex items-center justify-left gap-3">
             <Bot className="w-6 h-6 text-blue-500 font-extrabold " />
-                        <h2 className="text-center text-xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm">Python Code Assistant</h2>
+                        <h2 className="text-center text-xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm">Python Coding Assistant</h2>
           </div>
         </Card>
       </div>

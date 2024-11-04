@@ -3,6 +3,11 @@ import { UserCircle, Calendar, MessageCircle, Award } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../api';
 import BottomNavbar from "../components/BottomNavbar";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { LogOut } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom';
+
+
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
@@ -19,8 +24,8 @@ const ProfilePage = () => {
   const [newBio, setNewBio] = useState('');
 
   const generateAvatarUrl = (username) => {
-    const style = 'identicon';
-    return `https://api.dicebear.com/7.x/${style}/svg?seed=${username}&backgroundColor=23272a`;
+    const style = 'adventurer';
+    return `https://api.dicebear.com/7.x/${style}/svg?seed=${username}&backgroundColor=b6e3f4&backgroundType=gradientLinear,solid&scale=80`;
   };
 
   useEffect(() => {
@@ -75,7 +80,7 @@ const ProfilePage = () => {
     <div className="flex flex-col min-h-screen ">
       
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header Section */}
           <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
@@ -88,7 +93,7 @@ const ProfilePage = () => {
                 <img
                   src={avatarUrl}
                   alt={`${profileData.username}'s avatar`}
-                  className="w-full h-full rounded-full shadow-lg object-cover border-4 border-white"
+                  className="w-full h-full rounded-full shadow-lg object-cover border-4 border-black"
                 />
               )}
             </div>
@@ -100,6 +105,7 @@ const ProfilePage = () => {
                 <Award className="w-5 h-5 text-blue-500 mr-2" />
                 <p className="text-gray-700">Level {profileData.progress_level}</p>
               </div>
+              
             </div>
           </div>
 
@@ -134,7 +140,7 @@ const ProfilePage = () => {
               </div>
             ) : (
               <div className="relative">
-                <h3 className="text-2xl font-semibold text-gray-800 mb-6">About Me</h3>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-3">About Me</h3>
                 <p className="text-gray-700 text-lg leading-relaxed mb-6">{profileData.bio}</p>
                 <button 
                   onClick={() => setEditingBio(true)}
@@ -145,7 +151,7 @@ const ProfilePage = () => {
               </div>
             )}
           </div>
-
+           
           {/* Recent Discussions Section */}
           <div className="space-y-6">
             <div className="flex items-center justify-between mb-8">

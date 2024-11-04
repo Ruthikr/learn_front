@@ -77,7 +77,7 @@ const LessonDetailPage = () => {
   return (
     <>
       
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-4xl h-full mx-auto p-4">
         {lesson && (
           <div>
             <h1 className="mt-3 mb-5 text-3xl font-extrabold text-center text-gradient-to-r from-gray-600 to-gray-800 ">
