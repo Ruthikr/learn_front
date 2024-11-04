@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Bot, User, Loader2, Code as CodeIcon, Copy } from "lucide-react";
+import { Send, Bot, User, Loader2, Code as CodeIcon, Copy, Trash2, X } from "lucide-react";
 import api from "../api";
 import Navbar from "../components/Navbar";
 import BottomNavbar from "../components/BottomNavbar";
 
+// Helper function to parse content
 const parseContent = (text) => {
   const blocks = [];
   let currentText = "";
@@ -41,6 +42,7 @@ const parseContent = (text) => {
   return blocks;
 };
 
+// CodeBlock Component
 const CodeBlock = ({ language, content }) => {
   const [copied, setCopied] = useState(false);
 
@@ -81,6 +83,7 @@ const CodeBlock = ({ language, content }) => {
   );
 };
 
+// Text formatting helper
 const renderTextWithFormatting = (text, isUserMessage) => {
   const parts = text.split(/(\*\*.*?\*\*|\`.*?\`)/g);
   return parts.map((part, index) => {
@@ -108,18 +111,29 @@ const renderTextWithFormatting = (text, isUserMessage) => {
   });
 };
 
-const TypewriterEffect = ({ content, onComplete }) => {
+// TypewriterEffect Component
+const TypewriterEffect = ({ content, onComplete, onStop }) => {
   const [displayedContent, setDisplayedContent] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const mounted = useRef(true);
 
   useEffect(() => {
-    if (currentIndex < content.length) {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentIndex < content.length && mounted.current) {
       const timer = setTimeout(() => {
-        setDisplayedContent(prev => prev + content[currentIndex]);
-        setCurrentIndex(currentIndex + 1);
+        if (mounted.current) {
+          setDisplayedContent(prev => prev + content[currentIndex]);
+          setCurrentIndex(currentIndex + 1);
+        }
       }, 20);
       return () => clearTimeout(timer);
-    } else if (onComplete) {
+    } else if (onComplete && mounted.current) {
       onComplete();
     }
   }, [currentIndex, content, onComplete]);
@@ -137,13 +151,17 @@ const TypewriterEffect = ({ content, onComplete }) => {
           </p>
         )
       ))}
+      <Button onClick={onStop} className="mt-2" variant="outline" size="sm">
+        <X className="w-4 h-4 mr-2" /> Stop Generating
+      </Button>
     </div>
   );
 };
 
-const MessageContent = ({ content, typing, onComplete, sender }) => {
+// MessageContent Component
+const MessageContent = ({ content, typing, onComplete, sender, onStop }) => {
   if (typing) {
-    return <TypewriterEffect content={content} onComplete={onComplete} />;
+    return <TypewriterEffect content={content} onComplete={onComplete} onStop={onStop} />;
   }
 
   const blocks = parseContent(content);
@@ -166,33 +184,59 @@ const MessageContent = ({ content, typing, onComplete, sender }) => {
   );
 };
 
+// Main LLMPage Component
 const LLMPage = () => {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeTypingIndex, setActiveTypingIndex] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
+  // Load saved messages
   useEffect(() => {
-    const savedMessages = localStorage.getItem("chatMessages");
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
+    try {
+      const savedMessages = localStorage.getItem("chatMessages");
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        setMessages(parsed.map(msg => ({
+          ...msg,
+          typing: false
+        })));
+      }
+    } catch (error) {
+      console.error("Error loading saved messages:", error);
     }
   }, []);
 
+  // Save messages
   useEffect(() => {
-    localStorage.setItem("chatMessages", JSON.stringify(messages));
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem("chatMessages", JSON.stringify(
+          messages.map(msg => ({
+            ...msg,
+            typing: false
+          }))
+        ));
+      } catch (error) {
+        console.error("Error saving messages:", error);
+      }
+    }
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, activeTypingIndex]);
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -201,41 +245,101 @@ const LLMPage = () => {
     }
   };
 
+  const handleTypingComplete = (index) => {
+    setActiveTypingIndex(null);
+    setMessages(prev => prev.map((msg, i) => 
+      i === index ? { ...msg, typing: false } : msg
+    ));
+    setIsTyping(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!query.trim() || loading) return;
+    if (!query.trim() || loading || isTyping) return;
 
-    const userMessage = { content: query, sender: "user" };
+    // Abort previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const userMessage = { content: query.trim(), sender: "user" };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
     setError("");
     setQuery("");
+    adjustTextareaHeight();
+
+    // Create new AbortController
+    abortControllerRef.current = new AbortController();
 
     try {
-      const res = await api.post("/api/llm/generate-code/", { query });
+      const res = await api.post("/api/llm/generate-code/", 
+        { query: userMessage.content },
+        { signal: abortControllerRef.current.signal }
+      );
+
+      if (!res.data.response) {
+        throw new Error("Empty response from server");
+      }
+
+      const newMessages = [...messages, userMessage, {
+        content: res.data.response,
+        sender: "bot",
+        typing: true
+      }];
+      
+      setMessages(newMessages);
+      setActiveTypingIndex(newMessages.length - 1);
       setIsTyping(true);
-      setMessages(prev => [
-        ...prev,
-        { content: res.data.response, sender: "bot", typing: true }
-      ]);
     } catch (err) {
-      setError("Failed to generate response. Please try again.");
-     } finally {
+      if (err.name === 'AbortError') {
+        console.log('Request aborted');
+      } else {
+        setError(err.response?.data?.error || "Failed to generate response. Please try again.");
+        setTimeout(() => setError(""), 5000); // Clear error after 5 seconds
+      }
+    } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleStopGenerating = (index) => {
+    setActiveTypingIndex(null);
+    setMessages(prev => prev.map((msg, i) => 
+      i === index ? { ...msg, typing: false } : msg
+    ));
+    setIsTyping(false);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+    localStorage.removeItem("chatMessages");
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      
-      
       <div className="sticky top-0 z-10 bg-white shadow-md">
-        <Card className="text-center px-5 py-4 border-b">
+        <Card className=" flex align-center justify-between text-center px-5 py-4 border-b">
           <div className="text-center flex items-center justify-left gap-3">
-            <Bot className="w-6 h-6 text-blue-500 font-extrabold " />
-                        <h2 className="text-center text-xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm">Python Coding Assistant</h2>
+            <Bot className="w-6 h-6 text-blue-500 font-extrabold" />
+            <h2 className="text-center text-xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm">
+                    Python Coding Assistant
+            </h2>
           </div>
+            <div className="right-4 z-10">
+        <Button
+          onClick={handleClearChat}
+          className="bg-red-500 hover:bg-red-600 text-white shadow-md">
+        
+          
+          <Trash2 className="w-9 h-9" /> 
+        
+          
+        </Button>
+      </div>
         </Card>
+      
       </div>
 
       <div className="flex-1 overflow-hidden relative">
@@ -267,9 +371,10 @@ const LLMPage = () => {
                   <div className="overflow-x-auto">
                     <MessageContent
                       content={msg.content}
-                      typing={msg.typing}
-                      onComplete={() => setIsTyping(false)}
+                      typing={msg.typing && index === activeTypingIndex}
+                      onComplete={() => handleTypingComplete(index)}
                       sender={msg.sender}
+                      onStop={() => handleStopGenerating(index)}
                     />
                   </div>
                 </div>
@@ -316,13 +421,16 @@ const LLMPage = () => {
                     handleSubmit(e);
                   }
                 }}
+                disabled={loading || isTyping}
                 required
               />
             </div>
             <Button
               type="submit"
-              disabled={loading || !query.trim()}
-              className="h-[44px] px-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:bg-blue-600 text-white shadow-sm transition-colors duration-200 flex-shrink-0"
+              disabled={loading || !query.trim() || isTyping}
+              className={`h-[44px] px-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:bg-blue-600 text-white shadow-sm transition-colors duration-200 flex-shrink-0 ${
+                (loading || isTyping) && "opacity-50 cursor-not-allowed"
+              }`}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -334,6 +442,8 @@ const LLMPage = () => {
         </form>
       </div>
       
+      
+
       <BottomNavbar />
     </div>
   );
