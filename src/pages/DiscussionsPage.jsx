@@ -15,7 +15,7 @@ const DiscussionsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Generate random image for each discussion
-  const getRandomImage = (id) => `https://picsum.photos/seed/${id}/400/300`;
+  const getRandomImage = (id) => `https://picsum.photos/seed/${id}/900/900`;
 
   // Generate random author avatar
   const getRandomAvatar = (name) => `https://api.multiavatar.com/${name}.svg`;
@@ -102,7 +102,7 @@ const DiscussionsPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-gradient-to-br bg-slate-50 pt-4 sm:p-6 lg:p-8">
         <div className="mb-12 max-w-7xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mt-4 mb-10 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm">
             Discussions
@@ -113,7 +113,7 @@ const DiscussionsPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-5 rounded-xl mb-8 hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold"
+            className="ml-4 flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-5 rounded-xl mb-8 hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold"
           >
             {showCreateForm ? <X size={20} /> : <Plus size={20} />}
             {showCreateForm ? "Cancel" : "Start a New Discussion"}
@@ -185,47 +185,48 @@ const DiscussionsPage = () => {
                 key={discussion.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="group relative overflow-hidden text-white rounded-2xl bg-gradient-to-br from-white/50 via-white/30 to-blue-500/30 shadow-xl hover:shadow-2xl transition-all duration-500 border border-white/50 backdrop-blur-lg"
+                className=" group relative overflow-hidden text-white rounded-sm bg-slate-50 shadow-lg hover:shadow-xl transition-all duration-500 border border-white/50 backdrop-blur-lg"
               >
                 {/* Author Section */}
-                <div className="relative p-6 pb-0">
+                <div className="relative p-4 pb-0">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="relative">
                       <img
                         src={getRandomAvatar(discussion.author.id)}
                         alt={discussion.author.name}
-                        className="w-12 h-12 rounded-full ring-4 ring-white/50 shadow-lg"
+                        className=" h-12 rounded-full ring-4 ring-white/50 shadow-lg"
                       />
                       <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
                     </div>
                     <div>
-                      <span className="text-blue-600 font-semibold">{discussion.author.username}</span>
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm font-semibold">{discussion.author.username}</span>
                       <div className="text-slate-500 text-sm">
                         {new Date(discussion.created_at).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
-                          year: 'numeric'
+                          year: 'numeric',
+                          hour:'numeric',
                         })}
                       </div>
                     </div>
                   </div>
 
                   {/* Discussion Title */}
-                  <h2 className="font-bold text-xl text-blue-900 mb-4 line-clamp-2">{discussion.title}</h2>
+                  <h2 className="font-bold text-2xl text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm mb-2 line-clamp-2">{discussion.title}</h2>
                 </div>
 
                 {/* Cover Image */}
-                <div className="px-6">
+                <div className="px-">
                   <img
                     src={getRandomImage(discussion.id)}
                     alt="Discussion cover"
-                    className="w-full h-48 object-cover rounded-xl shadow-lg"
+                    className="w-full max-h-[350px] min-h-[300px] object-cover shadow-lg"
                   />
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6">
-                  <div className="mb-6">
+                <div className="p-4">
+                  <div className="mb-5">
                     {discussion.content.length > 150 ? (
                       <>
                         <p className="text-slate-700 leading-relaxed break-words overflow-hidden">
@@ -250,7 +251,7 @@ const DiscussionsPage = () => {
                   </div>
 
                   {/* Actions Section */}
-                  <div className="flex items-center justify-between border-t border-black/30 pt-4">
+                  <div className="flex items-center justify-between border-t pt-3 ">
                     <div className="flex items-center gap-6">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -278,7 +279,7 @@ const DiscussionsPage = () => {
                       </motion.button>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-5">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
