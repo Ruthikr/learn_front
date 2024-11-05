@@ -23,12 +23,12 @@ export default defineConfig({
         start_url: "/",
         icons: [
           {
-            src: "rattlesnake-159135_1920.png",
+            src: "snake-312561_1920.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/rattlesnake-159135_1920.png",
+            src: "/snake-312561_1920.png",
             sizes: "512x512",
             type: "image/png",
           },
