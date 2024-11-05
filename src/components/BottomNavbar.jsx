@@ -14,10 +14,24 @@ import {
 const BottomNavbar = () => {
   const location = useLocation();
 
-  const getActiveClass = (path) =>
-    location.pathname === path ? "text-yellow-300" : "text-white";
+  // Updated function to keep the Courses icon active for /courses, /courses/{anything}, /lessons, and /lessons/{anything}
+  const getActiveClass = (path) => {
+    if (path === "/courses") {
+      return location.pathname.startsWith("/courses") || location.pathname.startsWith("/lessons")
+        ? "text-yellow-300"
+        : "text-white";
+    }
+    return location.pathname === path ? "text-yellow-300" : "text-white";
+  };
 
   const getIcon = (path, FilledIcon, OutlineIcon) => {
+    if (path === "/courses") {
+      return location.pathname.startsWith("/courses") || location.pathname.startsWith("/lessons") ? (
+        <FilledIcon size={24} fill="currentColor" />
+      ) : (
+        <OutlineIcon size={24} />
+      );
+    }
     return location.pathname === path ? (
       <FilledIcon size={24} fill="currentColor" />
     ) : (
