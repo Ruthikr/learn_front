@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import Navbar from "../components/Navbar";
-import BottomNavbar from "../components/BottomNavbar"
+import BottomNavbar from "../components/BottomNavbar";
+import { motion } from "framer-motion";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+
 const LessonDetailPage = () => {
   const { lessonId } = useParams();
   const [lesson, setLesson] = useState(null);
@@ -36,40 +39,53 @@ const LessonDetailPage = () => {
     console.log(`Answer for Exercise ${exerciseId}:`, answers[exerciseId]);
   };
 
-  /*if (loading) return <div className="text-center mt-10">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center mt-10">Error: {error}</div>;*/
-
   const renderContent = (content) => {
     const paragraphs = content.split(/\n\s*\n/);
 
     return paragraphs.map((paragraph, index) => {
-      // Enhanced Code Block Detection
       const isCodeBlock = /^\s{2,}|\b(function|const|let|var|return|if|else|class|import|export|def|print|console\.log)\b|[{;}=]/.test(paragraph) ||
                           paragraph.includes("{") || paragraph.includes("}") ||
                           /\b(async|await|try|catch|finally)\b/.test(paragraph);
 
-      // Enhanced Header Detection
-      const isHeader = /^[A-Z\s]+$/.test(paragraph) ||                      // All uppercase text
-                       /:$/.test(paragraph.trim()) ||                       // Ends with a colon
-                       /^(Chapter|Section|Lesson|Overview|Introduction|Conclusion|Summary|Example|Exercise)\b/i.test(paragraph.trim()) || // Common header keywords
-                       (paragraph.length < 50 && paragraph === paragraph.toUpperCase()); // Short uppercase lines
+      const isHeader = /^[A-Z\s]+$/.test(paragraph) || 
+                       /:$/.test(paragraph.trim()) || 
+                       /^(Chapter|Section|Lesson|Overview|Introduction|Conclusion|Summary|Example|Exercise)\b/i.test(paragraph.trim()) || 
+                       (paragraph.length < 50 && paragraph === paragraph.toUpperCase());
 
       if (isCodeBlock) {
         return (
-          <pre key={index} className="bg-gray-900 text-white p-4 rounded-md overflow-x-auto mt-4">
+          <motion.pre 
+            key={index} 
+            className="bg-gray-900 text-white p-4 rounded-md overflow-x-auto mt-4" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            transition={{ duration: 0.5 }}
+          >
             <code className="font-mono text-sm">{paragraph.trim()}</code>
-          </pre>
+          </motion.pre>
         );
       }
 
       return isHeader ? (
-        <h2 key={index} className="text-2xl font-bold mt-6  text-gradient-to-r  from-gray-600 to-gray-800 ">
+        <motion.h2 
+          key={index} 
+          className="text-2xl font-bold mt-6 text-gradient-to-r from-gray-600 to-gray-800" 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.4, delay: index * 0.05 }}
+        >
           {paragraph.trim()}
-        </h2>
+        </motion.h2>
       ) : (
-        <p key={index} className="text-lg text-gray-700 my-4 leading-relaxed">
+        <motion.p 
+          key={index} 
+          className="text-lg text-gray-700 my-4 leading-relaxed" 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.3, delay: index * 0.05 }}
+        >
           {paragraph.trim()}
-        </p>
+        </motion.p>
       );
     });
   };
@@ -77,23 +93,40 @@ const LessonDetailPage = () => {
   return (
     <>
       
-      <div className="max-w-4xl h-full mx-auto p-4">
-        {lesson && (
-          <div>
-            <h1 className="mt-3 mb-5 text-3xl font-extrabold text-center text-gradient-to-r from-gray-600 to-gray-800 ">
+      <div className="max-w-4xl min-h-screen
+      mx-auto px-9 py-6">
+        {loading ? (
+          <div className="flex justify-center items-center h-screen">
+            <AiOutlineLoading3Quarters className="text-gray-600 animate-spin text-4xl" />
+          </div>
+        ) : error ? (
+          <div className="text-red-500 text-center mt-10">Error: {error}</div>
+        ) : lesson && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="mt-3 mb-5 text-4xl font-extrabold text-center text-gradient-to-r from-gray-600 to-gray-800">
               {lesson.title}
             </h1>
-            <div className="mt-4">{renderContent(lesson.content)}</div>
-           <p className="text-gray-600 mt-4">Order: {lesson.order}</p> 
+            <div className="mt-4 text-sm">{renderContent(lesson.content)}</div>
+            <p className="text-gray-600 mt-4">Order: {lesson.order}</p> 
             <h2 className="text-2xl font-semibold mt-10 mb-4">Exercises</h2>
             <div className="mb-5 grid grid-cols-1 gap-6">
               {lesson.exercises.map((exercise) => (
-                <div key={exercise.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <motion.div 
+                  key={exercise.id} 
+                  className="bg-white p-6 rounded-lg shadow-md border border-gray-200" 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ duration: 0.3, delay: exercise.id * 0.1 }}
+                >
                   <div className="mb-2 text-lg font-semibold text-gray-800">
                     <strong>Q:</strong> {exercise.question}
                   </div>
                   <div className="mb-3 text-gray-600 italic">
-                    <em>Hint:</em>  ''' {exercise.hint}  '''
+                    <em>Hint:</em> {exercise.hint}
                   </div>
                   <input
                     type="text"
@@ -105,17 +138,18 @@ const LessonDetailPage = () => {
                   <button
                     onClick={() => handleSubmit(exercise.id)}
                     className="mt-1 w-full py-3 font-semibold text-white bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg shadow-lg 
-                        hover:from-gray-700 hover:to-gray-900 transition-colors duration-300 "
+                        hover:from-gray-700 hover:to-gray-900 transition-colors duration-300"
                   >
                     Submit
                   </button>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
+       
       </div>
-      <BottomNavbar></BottomNavbar>
+       <BottomNavbar />
     </>
   );
 };
