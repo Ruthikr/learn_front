@@ -15,7 +15,7 @@ const DiscussionsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Generate random image for each discussion
-  const getRandomImage = (id) => `https://picsum.photos/seed/${id}/400/400`;
+  const getRandomImage = (id) => `https://picsum.photos/seed/${id}/600/600`;
 
   // Generate random author avatar
   const getRandomAvatar = (name) => `https://api.multiavatar.com/${name}.svg`;
